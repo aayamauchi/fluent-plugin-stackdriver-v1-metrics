@@ -1,32 +1,33 @@
-require 'stackdriver'
-require 'fluent/plugin/output'
-
 module Fluent
   class StackdriverMetricsOutput < BufferedOutput
 
-    Fluent::Plugin.register_output('stackdriver_metrics', self)
+    Plugin.register_output('stackdriver_metrics', self)
 
     def initialize
       super
-      require 'net/http'
-      require 'uri'
+      require 'stackdriver'
     end
 
-    config_param :api_key, :string
+    config_param :api_key, :string, :default => nil
     config_param :instance_id, :string, :default => nil
-    config_param :counter_maps, :array, :default => []
-    config_param :metric_maps, :array, :default => []
+    config_param :counter_maps, :hash, :default => {}
+    config_param :counter_defaults, :array, :default => []
+    config_param :metric_maps, :hash, :default => {}
+    config_param :metric_defaults, :array, :default => []
 
     def configure(conf)
-      @api_key = conf.delete('api_key')
-      @instance_id = conf.delete('instance_id')
-      @counter_maps = conf.['counter_maps']
-      @metric_maps = conf.['metric_maps']
+      super(conf) {
+        @api_key = conf.delete('api_key')
+        @instance_id = conf.delete('instance_id')
+        @counter_maps = conf.delete('counter_maps')
+        @counter_defaults = conf.delete('counter_defaults')
+        @metric_maps = conf.delete('metric_maps')
+        @metric_defaults = conf.delete('metric_defaults')
+      }
 
       @base_entry = {}
       @base_entry['instance'] = @instance_id if @instance_id
 
-      super
     end
 
     def format(tag, time, record)
@@ -39,48 +40,54 @@ module Fluent
       timestamp = Time.now.to_i
       data = []
 
-      chunk.split("\n").each do |line|
+      count_data = {}
+      metric_data = {}
+
+      chunk.read.chomp.split("\n").each do |line|
         event = JSON.parse(line)
 
-        incr_data = {}
-        @increment_map.each do |cond_eval,name_eval|
-          if eval(cond_eval)
-            name = eval(name_val)
-            incr_data['increment'][name] ||= 0
-            incr_data['increment'][name] += 1
+        @counter_maps.each do |k,v|
+          if eval(k)
+            name = eval(v) 
+            count_data[name] ||= 0
+            count_data[name] += 1
           end
         end
 
-        incr_data.each do |k,v|
-          data =+ [
-            @base_entry.update({
-              'name' => k,
-              'value' => v,
-              'collected_at' => timestamp
-            })
-          ]
-        end
-
-        @metric_map.each do |cond_eval,key_eval|
-          if eval(cond_eval)
-            kv = Hash.new(eval(kv_eval))
-            kv.each do |k,v|
-              data += [
-                @base_entry.update({
-                  'name' => k,
-                  'value' => v
-                  'collected_at' => event['time'].to_i
-                })
-              ]
+        @metric_maps.each do |k,v|
+          if eval(k)
+            eval(v).each do |e|
+              metric_data[e['name']] = 1
+              data << @base_entry.merge({'collected_at' => event['time'].to_i}).merge(e)
             end
           end
         end
 
       end
 
+      count_data.each do |name,value|
+        data << @base_entry.merge({
+          'name' => name,
+          'value' => value,
+          'collected_at' => timestamp
+        })
+      end
+
+      @counter_defaults.each do |e|
+        if not count_data.key?(e['name'])
+          data << @base_entry.merge({'collected_at' => timestamp}).merge(e)
+        end
+      end
+
+      @metric_defaults.each do |e|
+        if not metric_data.key?(e['name'])
+          data << @base_entry.merge({'collected_at' => timestamp}).merge(e)
+        end
+      end
+
       if data
         StackDriver.init @api_key
-        StackDriver.send_multi_metric data
+        StackDriver.send_multi_metrics data
       end
 
     end
