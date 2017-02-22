@@ -56,9 +56,8 @@ module Fluent
 
         @metric_maps.each do |k,v|
           if eval(k)
-            eval(v).each do |e|
-              metric_data[e['name']] = 1
-              data << @base_entry.merge({'collected_at' => event['time'].to_i}).merge(e)
+            if eval(v)
+              data << @base_entry.merge({ 'collected_at' => event['time'].to_i }).merge(eval(v))
             end
           end
         end
