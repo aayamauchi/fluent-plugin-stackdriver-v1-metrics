@@ -1,7 +1,7 @@
 module Fluent
-  class StackdriverMetricsOutput < BufferedOutput
+  class StackdriverV1MetricsOutput < BufferedOutput
 
-    Plugin.register_output('stackdriver_metrics', self)
+    Plugin.register_output('stackdriver-v1_metrics', self)
 
     def initialize
       super
