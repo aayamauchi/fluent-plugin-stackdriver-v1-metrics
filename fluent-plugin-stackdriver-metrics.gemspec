@@ -13,4 +13,6 @@ Gem::Specification.new do |gem|
   gem.license       = 'Apache-2.0'
   gem.add_runtime_dependency 'fluentd', '>= 0.10.0'
   gem.add_runtime_dependency 'stackdriver', '< 0.3.0'
+  gem.signing_key = File.expand_path('~/certs/oss@hotschedules.com.key') if $0 =~ /gem\z/
+  gem.cert_chain    = %w[certs/oss@hotschedules.com.cert]
 end
