@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |gem|
   gem.name          = 'fluent-plugin-stackdriver-v1-metrics'
-  gem.version       = '0.3.0'
+  gem.version       = '0.4.0'
   gem.authors       = ['Alex Yamauchi']
   gem.email         = ['oss@hotschedules.com']
   gem.homepage      = 'https://github.com/bodhi-space/fluent-plugin-stackdriver-v1-metrics'
