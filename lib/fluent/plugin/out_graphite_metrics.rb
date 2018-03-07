@@ -99,19 +99,19 @@ module Fluent
   rescue Errno::ETIMEDOUT
     # after long periods with nothing emitted, the connection will be closed and result in timeout
     if trial <= @max_retries
-      log.warn "out_graphite: connection timeout to #{@host}:#{@port}. Reconnecting... "
+      log.warn "out_graphite_metrics: connection timeout to #{@host}:#{@port}. Reconnecting... "
       trial += 1
       connect_client!
       retry
     else
-      log.error "out_graphite: ERROR: connection timeout to #{@host}:#{@port}. Exceeded max_retries #{@max_retries}"
+      log.error "out_graphite_metrics: ERROR: connection timeout to #{@host}:#{@port}. Exceeded max_retries #{@max_retries}"
     end
   rescue Errno::ECONNREFUSED
-    log.warn "out_graphite: connection refused by #{@host}:#{@port}"
+    log.warn "out_graphite_metrics: connection refused by #{@host}:#{@port}"
   rescue SocketError => se
-    log.warn "out_graphite: socket error by #{@host}:#{@port} :#{se}"
+    log.warn "out_graphite_metrics: socket error by #{@host}:#{@port} :#{se}"
   rescue StandardError => e
-    log.error "out_graphite: ERROR: #{e}"
+    log.error "out_graphite_metrics: ERROR: #{e}"
   end
   
   def connect_client!
