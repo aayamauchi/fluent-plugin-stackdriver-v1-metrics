@@ -8,7 +8,8 @@ module Fluent
       require 'graphite-api'
     end
 
-    config_param :api_key, :string, :default => nil
+    config_param :graphite_uri, :string, :default => 'tcp://localhost:2003'
+    config_param :prefix, :string, :default => nil
     config_param :instance_id, :string, :default => nil
     config_param :counter_maps, :hash, :default => {}
     config_param :counter_defaults, :array, :default => []
@@ -17,7 +18,8 @@ module Fluent
 
     def configure(conf)
       super(conf) {
-        @api_key = conf.delete('api_key')
+        @graphite_uri = conf.delete('graphite_uri')
+        @prefix = conf.delete('prefix')
         @instance_id = conf.delete('instance_id')
         @counter_maps = conf.delete('counter_maps')
         @counter_defaults = conf.delete('counter_defaults')
@@ -26,7 +28,7 @@ module Fluent
       }
 
       @base_entry = {}
-      @base_entry['instance'] = @instance_id if @instance_id
+      @base_entry['prefix'] = @prefix if @prefix
 
     end
 
