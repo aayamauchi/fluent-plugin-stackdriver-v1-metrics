@@ -85,14 +85,34 @@ module Fluent
       end
 
       if data
-        StackDriver.init @api_key
-        StackDriver.send_multi_metrics data
+        stackdriver_to_graphite(data).each do |t,metrics|
+          post(metrics,t)
+        end
       end
 
     end
 
   end
-  
+
+  def stackdriver_to_graphite(metrics)
+    # Convert the Stackdriver API format to Graphite format so that the
+    # datastructure and parser don't have to be completely refactored.
+
+    data = {}
+
+    metrics.each do |elem|
+      if not data.key?(elem['collected_at'])
+        data[elem['collected_at']] = {}
+      end
+      data[elem['collected_at']][elem['name']] = elem['value']
+    end
+
+    done
+
+    yield data
+
+  end
+
   def post(metrics, time)
     trial ||= 1
     @client.metrics(metrics, time)
