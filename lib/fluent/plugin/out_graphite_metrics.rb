@@ -5,7 +5,7 @@ module Fluent
 
     def initialize
       super
-      require 'stackdriver'
+      require 'graphite-api'
     end
 
     config_param :api_key, :string, :default => nil
